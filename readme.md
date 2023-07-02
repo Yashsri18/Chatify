@@ -4,7 +4,7 @@ To start the project in your local machine, follow these steps.
 
 ```
 MONGO_URI = "PASTE YOUR MONGODB URI"
-PORT = "SPECIFY PORT(default 8080) WHERE YOU WANT TO START"
+PORT = "SPECIFY PORT(default 8000) WHERE YOU WANT TO START"
 
 ```
 ### Running the server.
