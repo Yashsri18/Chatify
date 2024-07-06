@@ -1,4 +1,4 @@
-To start the project in your local machine, there are two steps.
+To start the project in your local machine, there are two methods.
 
 # METHOD 1 
 
