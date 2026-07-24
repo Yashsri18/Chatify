@@ -1,9 +1,5 @@
 import express from "express";
-import connectDatabase from "./services/db.js";
 import chatMessage from "./utils/chatMessage.js";
-import dotenv from "dotenv";
-dotenv.config();
-connectDatabase();
 import loadChats from "./utils/loadChats.js";
 import http from "http";
 
@@ -20,39 +16,42 @@ import messageFormatter from "./utils/messageFormatter.js";
 
 app.use(express.static("public"));
 const bot = "chat_BOT";
-let user;
-io.on("connection", async (socket) => {
+io.on("connection", (socket) => {
 	logger.info("New WebSocket Connection ....");
-	socket.on("joinRoom", async ({ username, room }) => {
-		user = await userJoin(socket.id, username, room);
+	socket.on("joinRoom", ({ username, room }) => {
+		const user = userJoin(socket.id, username, room);
 
 		socket.join(user.room);
 
-		socket.emit("loadChats", await loadChats(user.roomId));
+		socket.emit("loadChats", loadChats(user.room));
 
 		socket.broadcast
 			.to(user.room)
 			.emit("message", messageFormatter(bot, `${user.username} has joined the chat`));
 		io.to(user.room).emit("roomUsers", {
 			room: user.room,
-			users: await getRoomUsers(user.roomId),
+			users: getRoomUsers(user.room),
 		});
 	});
-	socket.on("disconnect", async () => {
-		const user = await userLeave(socket.id);
+	socket.on("disconnect", () => {
+		const user = userLeave(socket.id);
+		if (!user) return;
+
 		io.to(user.room).emit("message", messageFormatter(bot, `${user.username} has left the chat`));
 		io.to(user.room).emit("roomUsers", {
 			room: user.room,
-			users: await getRoomUsers(user.roomId),
+			users: getRoomUsers(user.room),
 		});
 	});
-	socket.on("chatMessage", async (msg) => {
+	socket.on("chatMessage", (msg) => {
 		const user = getCurrentUser(socket.id);
+		if (!user) return;
 
-		io.to(user.room).emit("message", await chatMessage(user.roomId, user.username, msg));
+		io.to(user.room).emit("message", chatMessage(user.room, user.username, msg));
 	});
 });
 
-server.listen(8000 || process.env.PORT, () => {
-	logger.info("App is listening on Port 8080");
+const port = process.env.PORT || 8000;
+server.listen(port, () => {
+	logger.info(`App is listening on Port ${port}`);
 });
